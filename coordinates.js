@@ -8,13 +8,9 @@
 
 // Import necessary modules
 var https = require('https');
-//var forecast = require('./forecast');
+var forecast = require('./forecast');
 // 
 var API_KEY_GOOGLE = "AIzaSyCwxNDP4TLpF-pI2K5o3IhFjxydSWKLxSU";
-
-var address;
-var lat;
-var lng;
 
 
 function printError(error) {
@@ -22,9 +18,9 @@ function printError(error) {
 };
 
 // Get the users zip code
+function get(zipCode, callback) {
 // Convert zip code into latitude and longitude coordinates
-// Make a request to Google's Geocoding API 
-function getWeather(zipCode) {
+	// Make a request to Google's Geocoding API 
 	var request = https.get("https://maps.googleapis.com/maps/api/geocode/json?address=" + zipCode + "&key=" + API_KEY_GOOGLE, function(response) {
 		// Get Data and concat together
 		var responseBody = '';
@@ -37,11 +33,12 @@ function getWeather(zipCode) {
 					// Parse Data
 					parsedResData = JSON.parse(responseBody);
 
-					// Find & Save coordinates and City and State
-					address = parsedResData.results[0].formatted_address;
-					lat = parsedResData.results[0].geometry.location.lat;
-					lng = parsedResData.results[0].geometry.location.lng;
-					console.log(response.statusCode, address, lat, lng) // FOR TESTING!!!!!!! ########
+					// Find & Save Coordinates, City and State
+					data = {
+						address: parsedResData.results[0].formatted_address,
+						lat: parsedResData.results[0].geometry.location.lat,
+						lng: parsedResData.results[0].geometry.location.lng
+					}
 				} catch(error) { // Respond to any parsing errors
 					printError(error);
 					console.error("Sorry there has been an error parsing this data.");
@@ -51,10 +48,10 @@ function getWeather(zipCode) {
 				printError({message: "There was an issue getting the coordinates with the specified zip code." +
 					https.STATUS_CODES[response.statusCode]});
 				console.error("Sorry there has been a status code error ");
-			}
+			}	
+			// Return the data to the main program
+			callback(data);
 		});
-		// Get the days forecast with the given latitude and longitude coordinates
-		//forecast.getForecast(lat, lng);
 	});
 	// Respond to error on the Request
 	request.on("error", function(error) {
@@ -65,8 +62,10 @@ function getWeather(zipCode) {
 };
 
 
+
+
 // Expose this module for use in other applications
-module.exports.getWeather = getWeather;
+module.exports.get = get;
 
 
 

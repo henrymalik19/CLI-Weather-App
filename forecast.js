@@ -9,24 +9,45 @@
 var https = require('https');
 
 var API_KEY_FORECAST = "d315d7cd29f1c881e4b35b1e48fbd3f3";
-var lat = '40.87347';
-var lng = '-73.8272029';
+
+function printError(error) {
+	console.log("Got error: " + error);
+};
 
 // Get the days forecast with the given latitude and longitude coordinates
 //forecast.getForecast(lat, lng);
-// Make a request to Forecast.io's API (https://api.forecast.io/forecast/APIKEY/LATITUDE,LONGITUDE)
-var request = https.get("https://api.forecast.io/forecast/" + API_KEY_FORECAST + "/" + lat + "," + lng, function(response) {
-	// Get Data
-	var responseBody = '';
-	response.on("data", function(data) {
-		responseBody += data;
+function get(lat, lng, callback) {
+	// Make a request to Forecast.io's API (https://api.forecast.io/forecast/APIKEY/LATITUDE,LONGITUDE)
+	var request = https.get("https://api.forecast.io/forecast/" + API_KEY_FORECAST + "/" + lat + "," + lng, function(response) {
+		// Get Data
+		var responseBody = '';
+		response.on("data", function(data) {
+			responseBody += data;
+		});
+		response.on("end", function() {
+			//Parse Data
+			parsedResData = JSON.parse(responseBody);
+			// Save Data
+			data = {
+				summary: parsedResData.daily.data[0].summary,
+				tempMin: parsedResData.daily.data[0].temperatureMin,
+				tempMax: parsedResData.daily.data[0].temperatureMax
+			}
+			callback(data);
+		});
 	});
-	//Parse Data
-	response.on("end", function() {
-		console.log(response.statusCode); // FOR TESTING!!!!!!! ########
-		console.log(typeof responseBody); // FOR TESTING!!!!!!! ########
-		parsedResData = JSON.parse(responseBody);
-		console.log(typeof parsedResData); // FOR TESTING!!!!!!! ########
+	// Respond to error on the Request
+	request.on("error", function(error) {
+		printError();
+		console.error("Sorry there has been a connection error.");
+		console.error("Please check your connection and try again!");
 	});
-	// Print Data	
-});
+};
+
+
+// Expose this module for use in other applications
+module.exports.get = get;
+
+
+
+
